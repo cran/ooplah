@@ -6,9 +6,11 @@ dec <- DecoratorClass("dec",
   active = list(test = function(x) {
     if (missing(x)) private$.test else private$.test <- x
   }),
-  private = list(.test = FALSE), abstract = TRUE
+  private = list(.test = FALSE),
+  abstract = TRUE
 )
 dec_child <- DecoratorClass("dec_child", inherit = dec)
+dec_child2 <- DecoratorClass("dec_child2", inherit = dec)
 obj_dec <- dec_child$new(oopl)
 
 test_that("can create a decorator class", {
@@ -53,7 +55,6 @@ test_that("active bindings work", {
 test_that("error on decorating existing methods", {
   exists <- DecoratorClass("exists", public  = list(hello = function() "Oh no"))
   expect_error(exists$new(oopl, exists = "error"), "Fields/methods")
-  expect_error(exists$new(oopl), "Fields/methods")
 })
 
 test_that("skip on decorating existing methods - $", {
@@ -61,7 +62,7 @@ test_that("skip on decorating existing methods - $", {
     public = list(hello = function() "Oh no", goodbye = function() "Bye")
   )
   dec <- exists$new(oopl, exists = "skip")
-  expect_equal(private(dec)$.exists, "skip")
+  expect_equal(private(dec)$ooplah$.exists, "skip")
   expect_equal(dec$hello(), "Hello World, Ooplah!")
   expect_equal(dec$goodbye(), "Bye")
   expect_equal(dec$oop, "oop")
@@ -73,16 +74,18 @@ test_that("skip on decorating existing methods - [[", {
     public = list(hello = function() "Oh no", goodbye = function() "Bye")
   )
   dec <- exists$new(oopl, exists = "skip")
-  expect_equal(private(dec)[[".exists"]], "skip")
+  expect_equal(private(dec)$ooplah$.exists, "skip")
   expect_equal(dec[["hello"]](), "Hello World, Ooplah!")
   expect_equal(dec[["goodbye"]](), "Bye")
   expect_equal(dec[["oop"]], "oop")
+
+  expect_equal(dec, exists$new(oopl))
 })
 
 test_that("skip on decorating existing methods - switch to field", {
   exists <- DecoratorClass("exists", public  = list(hello = "Oh no"))
   expect_equal(exists$new(oopl, exists = "skip")$hello(),
-               "Hello World, Ooplah!")
+              "Hello World, Ooplah!")
 })
 
 test_that("overwrite on decorating existing methods - $", {
@@ -90,7 +93,7 @@ test_that("overwrite on decorating existing methods - $", {
     public = list(hello = function() "Oh no", goodbye = function() "Bye")
   )
   dec <- exists$new(oopl, exists = "overwrite")
-  expect_equal(private(dec)$.exists, "overwrite")
+  expect_equal(private(dec)$ooplah$.exists, "overwrite")
   expect_equal(dec$hello(), "Oh no")
   expect_equal(dec$goodbye(), "Bye")
   expect_equal(dec$oop, "oop")
@@ -101,7 +104,7 @@ test_that("overwrite on decorating existing methods - [[", {
     public = list(hello = function() "Oh no", goodbye = function() "Bye")
   )
   dec <- exists$new(oopl, exists = "overwrite")
-  expect_equal(private(dec)[[".exists"]], "overwrite")
+  expect_equal(private(dec)$ooplah$.exists, "overwrite")
   expect_equal(dec[["hello"]](), "Oh no")
   expect_equal(dec[["goodbye"]](), "Bye")
   expect_equal(dec[["oop"]], "oop")
@@ -141,4 +144,14 @@ test_that("can't decorate twice", {
 
   expect_error(dec1$new(oop_dec2), "already decorated with")
   expect_error(dec2$new(oop_dec2), "already decorated with")
+})
+
+test_that("decorate sugar - env", {
+  oop <- ooplah$new()
+  d1 <- decorate(oop, c(dec_child, dec_child2))
+
+  oop <- ooplah$new()
+  d2 <- decorate(oop, c(dec_child, dec_child2))
+
+  expect_identical(d1, d2)
 })
